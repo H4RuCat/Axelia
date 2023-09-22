@@ -1,14 +1,15 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder , EmbedBuilder } = require('discord.js');
 
-const task = [];
+const tasks = [];
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('task')
 		.setDescription('タスクの追加・削除・確認が出来るよ！')
         .addStringOption(option =>
-            option.setName('task')
+            option.setName('type')
                 .setDescription('何をするか決める')
+                .setRequired(true)
                 .addChoices(
                     { name:'add', value:'taskAdd' },
                     { name:'remove', value:'taskRemove' },
@@ -20,15 +21,28 @@ module.exports = {
         
         await interaction.deferReply();
 
+        member = interaction.member.id;
+
         // 8 - 11行目
-        const taskValue = interaction.options.getString('task');
+        const typeValue = interaction.options.getString('task');
+        // const contentValue = interaction.options.getString('content');
 
         // optionごとの処理
-        switch (taskValue) {
+        switch (typeValue) {
 
             case 'taskAdd':
 
-                task.push();
+                tasks.push({ key: member, value: typeValue });
+                const memberTasks = tasks.filter(task => task.key === member);
+
+                const embed = new EmbedBuilder()
+                    .setColor("#ffffff")
+                    .setTitle("Tasks")
+                    .setDescription('description')
+                
+                console.log(memberTasks);
+
+                await interaction.followUp({ embeds: [embed] });
 
                 break;
 
