@@ -1,4 +1,5 @@
 const { SlashCommandBuilder , EmbedBuilder } = require('discord.js');
+const fs = require('fs');
 
 const tasks = [];
 
@@ -41,6 +42,28 @@ module.exports = {
                     .setDescription('description')
                 
                 console.log(memberTasks);
+
+                if ( !fs.existsSync('taskData.json') ) {
+
+                    fs.writeFileSync( 'taskData.json', JSON.stringify(memberTasks, undefined, 2) );
+                    await interaction.followUp('`taskData.json`が存在しない為、作成しました。');
+                    return;
+
+                } else {
+
+                    const rawData = fs.readFileSync('taskData.json');
+                    const loadedData = JSON.parse(rawData);
+
+                    const finalData = [...loadedData, ...memberTasks];
+                    
+                    fs.writeFileSync( 'taskData.json', JSON.stringify(finalData, undefined, 2) );
+
+                }
+
+                const rawData = fs.readFileSync('taskData.json');
+                const loadedData = JSON.parse(rawData);
+
+                console.log('データ: ', loadedData);
 
                 await interaction.followUp({ embeds: [embed] });
 
