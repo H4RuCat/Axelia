@@ -55,17 +55,49 @@ module.exports = {
 
     handleButtonInteraction: async function (interaction) {
 
-        // Button群
-        const customId = interaction.customId;
+        customId = interaction.customId;
+        member = interaction.member.id;
 
-        console.log(customId)
+        const rawData = fs.readFileSync('taskData.json');
+        const loadedData = JSON.parse(rawData);
         
-        switch (true) {
+        console.log(customId);
+
+        switch (customId) {
         
-            case /requestConfirm\d*/.test(customId):
+            case /requestConfirm\d*/:
 
-                await interaction.reply('うんち！！！！！！！wwwwwwwwwwwwwwww')
+                console.log('test2');
 
+                // customIdの中から数字のみを取得
+                var idNumber = Number(customId.replace(/[^0-9]/g, ''));
+                const requestTask = loadedData.find(task => task.id === idNumber);
+                const loadCount = loadedData.filter(task => task.count);
+
+                // taskData.jsonから取得したcountの値から1を引く
+                let count = loadCount[0].count - 1;
+
+                if ( !requestTask ) {
+                    await interaction.reply({ content: 'このタスクはもう誰かが引き受けています。', ephemeral: true });
+                    return;
+                }
+                
+                // tasksの配列の中にぶっこむ
+                tasks.push({ key: member, value: requestTask.value }, { count: count });
+                
+                // taskData.jsonから、現在存在する{ count: x }と、押されたButtonのメッセージに対応する要素を削除
+                loadedData.splice(loadedData.indexOf(requestTask), 1);
+                loadedData.splice(loadedData.indexOf(loadedData.count), 1);
+                
+                // いつものがちゃこん
+                const finalData = [...loadedData, ...tasks];
+
+                fs.writeFileSync( 'taskData.json', JSON.stringify(finalData, undefined, 2) );
+
+                tasks.pop();
+
+                interaction.reply({ content: `${interaction.member} **がこのタスクを引き受けました。**` })
+                 
                 break;
         
         }
@@ -237,16 +269,19 @@ module.exports = {
                 // loadedDataからcountの値を取り出す
                 const loadCount = loadedData.filter(task => task.count);
                 // countの値がなかったら、count: 0を追加する
-                if(loadCount.length == 0) loadCount.push({count: 0});
+                if ( loadCount.length == 0 ) loadCount.push({count: 0});
                 // countの値が0以上の数じゃなかったら、0にする(分けているのはエラーになるため)
-                if(!Number.isInteger(loadCount[0].count)) loadCount[0].count = 0;
-                if(loadCount[0].count < 0) loadCount[0].count = 0;
+                if ( !Number.isInteger(loadCount[0].count) ) loadCount[0].count = 0;
+                if ( loadCount[0].count < 0 ) loadCount[0].count = 0;
+
                 // countに代入し、値を1増やす
                 let count = loadCount[0].count + 1;
+
                 // loadedDataからcountの値を削除する
                 loadedData.forEach(function (value) {
                     delete value.count;
                 });
+
                 // loadedDataから空のオブジェクトを削除する(=値が存在するものだけを取り出す)
                 let loadedData_noEmpty = loadedData.filter(function (value) {
                     return Object.keys(value).length;
