@@ -5,21 +5,32 @@ const tasks = [];
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName('task')
-		.setDescription('タスクの追加・削除・確認が出来るよ！')
-        .addStringOption(option =>
-            option.setName('type')
-                .setDescription('何をするか決める')
-                .setRequired(true)
-                .addChoices(
-                    { name:'add', value:'taskAdd' },
-                    { name:'remove', value:'taskRemove' },
-                    { name:'list', value:'taskList' }
-                )
-        )
-        .addStringOption(option => 
-            option.setName('content')
-                .setDescription('どんな内容？')
+    .setName('task')
+    .setDescription('タスクの追加・削除・確認が出来るよ！')
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('add')
+            .setDescription('タスクを追加する')
+            .addStringOption(option =>
+                option.setName('content')
+                    .setDescription('追加したいタスクの内容')
+                    .setRequired(true)
+            )
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('remove')
+            .setDescription('タスクを削除する')
+            .addIntegerOption(option =>
+                option.setName('tasknumber')
+                    .setDescription('削除するタスクの番号 / Listで確認出来ます。')
+                    .setRequired(true)
+            )
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('list')
+            .setDescription('タスクの一覧を表示する')
         ),
 
 	execute: async function(interaction) {
@@ -27,6 +38,7 @@ module.exports = {
         await interaction.deferReply();
 
         member = interaction.member.id;
+        user = interaction.member.user;
 
         // データ(今回は taskData.json)読み取るときに使う二人
         const rawData = fs.readFileSync('taskData.json');
@@ -38,13 +50,29 @@ module.exports = {
         // lengthの形で、どのくらい要素があるか。
         const dataMemberTasks = loadedData.filter(task => task.key === member);
 
-        const typeValue = interaction.options.getString('type');
+        const typeValue = interaction.options.getSubcommand();
         const contentValue = interaction.options.getString('content');
+        const removeNumberValue = interaction.options.getInteger('tasknumber');
+
+        const avatarURL = user.displayAvatarURL({ format: 'png', dynamic: true, size: 1024 });
+
+        const channel = interaction.guild.channels.cache.get('1055771880524619856');
+
+        if ( typeValue == 'add' ) visionTaskType = '追加';
+        if ( typeValue == 'remove' ) visionTaskType = '削除';
+
+        const visionEmbed = new EmbedBuilder()
+        .setTitle("**Task vision**")
+        .setDescription(`**Taskの ${visionTaskType}**`)
+        .setThumbnail(avatarURL)
+        .addFields(
+            { name: '__User情報__', value: `**UserName:** ${user.username} | **UserID:** ${user.id}` }
+        )
 
         // optionごとの処理
         switch (typeValue) {
 
-            case 'taskAdd':
+            case 'add':
 
                 if ( contentValue == null ) {
                     interaction.followUp('追加するタスクの内容を考えてから出直してください。')
@@ -80,25 +108,46 @@ module.exports = {
                     fs.writeFileSync( 'taskData.json', JSON.stringify(finalData, undefined, 2) );
 
                 }
+                visionEmbed
+                    .setColor("#008000")
+                    .addFields(
+                        { name: '__Taskの内容__', value: `**${values.toString()}**` }
+                    )
+
                 // 一時的に配列に入れてただけなので速攻削除！w
                 tasks.pop();
 
                 await interaction.followUp({ embeds: [addEmbed] });
+                await channel.send({ embeds: [visionEmbed] });
 
                 break;
 
-            case 'taskRemove':
-                
-                if ( isNaN(contentValue) ) {
+            case 'remove':
+
+                const removeValue = removeNumberValue - 1 ;
+
+                if ( isNaN(removeValue) ) {
                     interaction.followUp('Int型にしてから出直してください。')
                     return;
                 }
+        
+                if ( removeValue >= 0 && removeValue < dataMemberTasks.length ) {
 
-                if ( contentValue >= 0 && contentValue < dataMemberTasks.length ) {
+                    const newData = loadedData.filter(task => !dataMemberTasks.includes(task));
+                    const removeTask = dataMemberTasks.splice(removeValue, 1);
 
-                    
-                    
+                    const finalData = [...newData, ...dataMemberTasks];
 
+                    fs.writeFileSync( 'taskData.json', JSON.stringify(finalData, undefined, 2) );
+
+                    interaction.followUp(`**Task:** __${removeTask[0].value.toString()}__ を削除しました。`);
+
+                    visionEmbed
+                        .setColor("#ff0000")
+                        .addFields(
+                            { name: '__Taskの内容__', value: `**${removeTask[0].value.toString()}**` }
+                        )
+                    await channel.send({ embeds: [visionEmbed] });
                     
                 } else {
                     interaction.followUp('指定された値が不適切なので、出直してください。');
@@ -107,14 +156,13 @@ module.exports = {
 
                 break;
             
-            case 'taskList':
+            case 'list':
                 
                 // memberとkeyが一致するUserのTaskをtaskData.jsonから参照し、どれだけのtaskを滞納しているか確認する
 
                 const listEmbed1 = new EmbedBuilder()
                     .setColor("#ffffff")
                     .setTitle("**Task 一覧**")
-                    .setDescription(`取り合えずtaskの数だけ:** ${loadedData.length.toString()}**`);
 
                 const listEmbed2 = new EmbedBuilder()
                     .setColor("#ffffff")
@@ -122,11 +170,16 @@ module.exports = {
                     .setDescription('貴方にはTaskが存在しません。働いてください。');
 
                 // 滞納しているtaskが無かったら働くように促す。もしあったらそのまま表示。
-                if ( dataMemberTasks.length > 0 ) 
-                  interaction.followUp({ embeds: [listEmbed1] });
-                else 
-                  interaction.followUp({ embeds: [listEmbed2] });
+                if ( dataMemberTasks.length > 0 ) {
 
+                    const taskList = dataMemberTasks.map((task, index) => `**${index + 1}.** ${task.value}`);
+                    listEmbed1.setDescription(taskList.join('\n')); 
+
+                    interaction.followUp({ embeds: [listEmbed1] });
+
+                } else { 
+                    interaction.followUp({ embeds: [listEmbed2] });
+                }
                 break;
 
         }
