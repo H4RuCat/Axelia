@@ -60,9 +60,9 @@ module.exports = {
 
         console.log(customId)
         
-        switch (customId) {
+        switch (true) {
         
-            case 'requestconfirm':
+            case /requestConfirm\d*/.test(customId):
 
                 await interaction.reply('うんち！！！！！！！wwwwwwwwwwwwwwww')
 
@@ -234,6 +234,23 @@ module.exports = {
                 }
                 break;
             case 'request':
+                // loadedDataからcountの値を取り出す
+                const loadCount = loadedData.filter(task => task.count);
+                // countの値がなかったら、count: 0を追加する
+                if(loadCount.length == 0) loadCount.push({count: 0});
+                // countの値が0以上の数じゃなかったら、0にする(分けているのはエラーになるため)
+                if(!Number.isInteger(loadCount[0].count)) loadCount[0].count = 0;
+                if(loadCount[0].count < 0) loadCount[0].count = 0;
+                // countに代入し、値を1増やす
+                let count = loadCount[0].count + 1;
+                // loadedDataからcountの値を削除する
+                loadedData.forEach(function (value) {
+                    delete value.count;
+                });
+                // loadedDataから空のオブジェクトを削除する(=値が存在するものだけを取り出す)
+                let loadedData_noEmpty = loadedData.filter(function (value) {
+                    return Object.keys(value).length;
+                });
 
                 const roleValue = interaction.options.getRole('role');
                 const titleValue = interaction.options.getString('title');
@@ -250,7 +267,7 @@ module.exports = {
                     .setTimestamp()
                 
                 const confirm = new ButtonBuilder()
-                    .setCustomId('requestConfirm')
+                    .setCustomId('requestConfirm' + count)
                     .setLabel('タスクを受ける')
                     .setStyle(ButtonStyle.Success);
                 
@@ -264,6 +281,15 @@ module.exports = {
                     embeds: [requestEmbed],
                     components: [requestRow]
                 });
+                let newArray = [];
+                //memberが存在しないため、valueとidのみ配列へ
+                newArray.push({ value: taskValue, id: count });
+                // {count: (数字)}の形式で配列に入れる
+                newArray.push({ count: count });
+                //がっちゃんこ
+                const finalData = [...loadedData_noEmpty, ...newArray];
+                //書き込み
+                fs.writeFileSync( 'taskData.json', JSON.stringify(finalData, undefined, 2) );
                 
                 break;
 
