@@ -1,4 +1,4 @@
-const { SlashCommandBuilder , EmbedBuilder } = require('discord.js');
+const { ActionRowBuilder, SlashCommandBuilder , EmbedBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const fs = require('fs');
 
 const tasks = [];
@@ -31,8 +31,48 @@ module.exports = {
         subcommand
             .setName('list')
             .setDescription('タスクの一覧を表示する')
+    )
+    .addSubcommand(subcommand =>
+         subcommand
+            .setName('request')
+            .setDescription('タスクの依頼をする')
+            .addRoleOption(option =>
+                option.setName('role')
+                    .setDescription('taskを依頼するroleを指定')
+                    .setRequired(true)
+                )
+            .addStringOption(option =>
+                option.setName('title')
+                    .setDescription('依頼するtaskのtitleを指定')
+                    .setRequired(true)
+                )
+            .addStringOption(option =>
+                option.setName('task')
+                    .setDescription('依頼するtaskの内容を指定')
+                    .setRequired(true)
+                )
         ),
 
+    handleButtonInteraction: async function (interaction) {
+
+        // Button群
+        const customId = interaction.customId;
+
+        console.log(customId)
+        
+        switch (customId) {
+        
+            case 'requestconfirm':
+
+                await interaction.reply('うんち！！！！！！！wwwwwwwwwwwwwwww')
+
+                break;
+        
+        }
+
+        return;
+
+    },
 	execute: async function(interaction) {
         
         await interaction.deferReply();
@@ -56,10 +96,22 @@ module.exports = {
 
         const avatarURL = user.displayAvatarURL({ format: 'png', dynamic: true, size: 1024 });
 
-        const channel = interaction.guild.channels.cache.get('1055771880524619856');
+        const logChannel = interaction.guild.channels.cache.get('1055771880524619856');
+        const requestChannel = interaction.guild.channels.cache.get('1155383813564809276');
+
+        // var now = new Date();
+
+        // var Year = now.getFullYear();
+        // var Month = now.getMonth()+1;
+        // var Day = now.getDate();
+        // var Hour = now.getHours();
+        // var Min = now.getMinutes();
+        // var Sec = now.getSeconds();
 
         if ( typeValue == 'add' ) visionTaskType = '追加';
         if ( typeValue == 'remove' ) visionTaskType = '削除';
+        if ( typeValue == 'list' ) visionTaskType = '一覧表示';
+        if ( typeValue == 'request' ) visionTaskType = '依頼';
 
         const visionEmbed = new EmbedBuilder()
         .setTitle("**Task vision**")
@@ -69,7 +121,7 @@ module.exports = {
             { name: '__User情報__', value: `**UserName:** ${user.username} | **UserID:** ${user.id}` }
         )
 
-        // optionごとの処理
+        // SlashCommand群
         switch (typeValue) {
 
             case 'add':
@@ -118,7 +170,7 @@ module.exports = {
                 tasks.pop();
 
                 await interaction.followUp({ embeds: [addEmbed] });
-                await channel.send({ embeds: [visionEmbed] });
+                await logChannel.send({ embeds: [visionEmbed] });
 
                 break;
 
@@ -147,7 +199,7 @@ module.exports = {
                         .addFields(
                             { name: '__Taskの内容__', value: `**${removeTask[0].value.toString()}**` }
                         )
-                    await channel.send({ embeds: [visionEmbed] });
+                    await logChannel.send({ embeds: [visionEmbed] });
                     
                 } else {
                     interaction.followUp('指定された値が不適切なので、出直してください。');
@@ -180,6 +232,39 @@ module.exports = {
                 } else { 
                     interaction.followUp({ embeds: [listEmbed2] });
                 }
+                break;
+            case 'request':
+
+                const roleValue = interaction.options.getRole('role');
+                const titleValue = interaction.options.getString('title');
+                const taskValue = interaction.options.getString('task');
+
+                const requestEmbed = new EmbedBuilder()
+                    .setColor("#ff00ff")
+                    .setTitle("**Task 依頼**")
+                    .setThumbnail(avatarURL)
+                    .setDescription(`**__${titleValue}__**`)
+                    .setFields(
+                        { name: ` `, value: `${taskValue}`}
+                    )
+                    .setTimestamp()
+                
+                const confirm = new ButtonBuilder()
+                    .setCustomId('requestConfirm')
+                    .setLabel('タスクを受ける')
+                    .setStyle(ButtonStyle.Success);
+                
+                const requestRow = new ActionRowBuilder()
+			        .addComponents(confirm);
+                
+                interaction.followUp(`**依頼を送信しました！**`);
+
+                await requestChannel.send(`${roleValue}** へ依頼です。確認してください。**`);
+                await requestChannel.send({ 
+                    embeds: [requestEmbed],
+                    components: [requestRow]
+                });
+                
                 break;
 
         }

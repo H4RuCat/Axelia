@@ -16,11 +16,10 @@ client.once(Events.ClientReady, c => {
 	console.log(`準備OKです! ${c.user.tag}がログインします。`);
 });
 
-
 // スラッシュコマンドに応答するには、interactionCreateのイベントリスナーを使う必要がある
 client.on(Events.InteractionCreate, async interaction => {
     // スラッシュ以外のコマンドの場合は対象外なので早期リターンさせて終了
-    if (!interaction.isChatInputCommand()) return;
+    if ( !( interaction.isChatInputCommand() || interaction.isButton() ) ) return;
 
     // コマンドにスラッシュが使われているかどうかはisChatInputCommand()で判断
 
@@ -39,19 +38,28 @@ client.on(Events.InteractionCreate, async interaction => {
     };
 
     // コマンドごとの処理
-    const commandName = interaction.commandName;
-    switch (commandName) {
-        case testFile.data.name:
-            await executeCommand(testFile, interaction);
-            break;
-        // case playFile.data.name:
-        //     await executeCommand(playFile, interaction);
-        //     break;
-        case taskFile.data.name:
-            await executeCommand(taskFile, interaction);
-            break;
-        default:
-            console.error(`${commandName}というコマンドには対応していません。`);
+    if ( interaction.isChatInputCommand() ) {
+        const commandName = interaction.commandName;
+        switch (commandName) {
+            case testFile.data.name:
+                await executeCommand(testFile, interaction);
+                break;
+            // case playFile.data.name:
+            //     await executeCommand(playFile, interaction);
+            //     break;
+            case taskFile.data.name:
+                await executeCommand(taskFile, interaction);
+                break;
+            default:
+                console.error(`${commandName}というコマンドには対応していません。`);
+        }
+    } else if ( interaction.isButton() ) {
+        const buttonName = interaction.customId;
+        switch (buttonName) {
+            case 'requestconfirm':
+                taskFile.handleButtonInteraction(interaction, );
+                break;
+        }
     }
 });
 
