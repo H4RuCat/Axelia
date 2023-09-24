@@ -60,27 +60,27 @@ module.exports = {
 
         const rawData = fs.readFileSync('taskData.json');
         const loadedData = JSON.parse(rawData);
-        
-        console.log(customId);
 
-        switch (customId) {
-        
-            case /requestConfirm\d*/:
+        // /requestConfirm\d*/.test(customId) = trueのはずなのに、switch-caseが動かない問題勃発してます。
+        // customId = requestConfirm[数値] 
 
-                console.log('test2');
+        switch (/requestConfirm\d*/.test(customId)) {
+        
+            case /requestConfirm\d*/.test(customId):
 
                 // customIdの中から数字のみを取得
                 var idNumber = Number(customId.replace(/[^0-9]/g, ''));
                 const requestTask = loadedData.find(task => task.id === idNumber);
-                const loadCount = loadedData.filter(task => task.count);
-
-                // taskData.jsonから取得したcountの値から1を引く
-                let count = loadCount[0].count - 1;
 
                 if ( !requestTask ) {
                     await interaction.reply({ content: 'このタスクはもう誰かが引き受けています。', ephemeral: true });
                     return;
                 }
+
+                const loadCount = loadedData.filter(task => task.count);
+
+                // taskData.jsonから取得したcountの値から1を引く
+                let count = loadCount[0].count - 1;
                 
                 // tasksの配列の中にぶっこむ
                 tasks.push({ key: member, value: requestTask.value }, { count: count });
@@ -97,6 +97,25 @@ module.exports = {
                 tasks.pop();
 
                 interaction.reply({ content: `${interaction.member} **がこのタスクを引き受けました。**` })
+
+                const avatarURL = user.displayAvatarURL({ format: 'png', dynamic: true, size: 1024 });
+                const logChannel = interaction.guild.channels.cache.get('1055771880524619856');
+                const requestChannel = interaction.guild.channels.cache.get('1155383813564809276');
+
+                const visionEmbed = new EmbedBuilder()
+                    .setTitle("**Task vision**")
+                    .setDescription(`**Taskの 引き受け**`)
+                    .setColor("#00ffff")
+                    .setThumbnail(avatarURL)
+                    .addFields(
+                        { name: '__User情報__', value: `**UserName:** ${user.username} | **UserID:** ${user.id}` }
+                    )
+                    .addFields(
+                        { name: '__Taskの内容__', value: `**${requestTask.value}**` }
+                    )
+
+                await logChannel.send({ embeds: [visionEmbed] });
+
                  
                 break;
         
@@ -325,6 +344,14 @@ module.exports = {
                 const finalData = [...loadedData_noEmpty, ...newArray];
                 //書き込み
                 fs.writeFileSync( 'taskData.json', JSON.stringify(finalData, undefined, 2) );
+
+                visionEmbed
+                .setColor("#ffff00")
+                .addFields(
+                    { name: '__Taskの内容__', value: `**${taskValue.toString()}**` }
+                )
+
+                await logChannel.send({ embeds: [visionEmbed] });
                 
                 break;
 
