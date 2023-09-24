@@ -55,9 +55,9 @@ client.on(Events.InteractionCreate, async interaction => {
         }
     } else if ( interaction.isButton() ) {
         const buttonName = interaction.customId;
-        switch (buttonName) {
-            case 'requestconfirm':
-                taskFile.handleButtonInteraction(interaction, );
+        switch (true) {
+            case /requestConfirm\d*/.test(buttonName):
+                taskFile.handleButtonInteraction(interaction);
                 break;
         }
     }
