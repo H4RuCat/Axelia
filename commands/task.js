@@ -184,15 +184,31 @@ module.exports = {
         if ( typeValue == 'request' ) visionTaskType = '依頼';
 
         const visionEmbed = new EmbedBuilder()
-        .setTitle("**Task vision**")
-        .setDescription(`**Taskの ${visionTaskType}**`)
-        .setThumbnail(avatarURL)
-        .addFields(
-            { name: '__User情報__', value: `**UserName:** ${user.username} | **UserID:** ${user.id}` }
-        )
+            .setTitle("**Task vision**")
+            .setDescription(`**Taskの ${visionTaskType}**`)
+            .setThumbnail(avatarURL)
+            .addFields(
+                { name: '__User情報__', value: `**UserName:** ${user.username} | **UserID:** ${user.id}` }
+            )
         
+        const dateRegex1 = /^\d{4}\/\d{2}\/\d{2}$/;
+        const dateRegex2 = /^\d{2}:\d{2}:\d{2}$/;
+
         const Date1 = interaction.options.getString('time1');    // 年月日
         const Date2 = interaction.options.getString('time2');  // 時分秒
+        
+        console.log(Date1);
+
+        if ( Date1 != null || Date2 != null  ) {
+            if ( !dateRegex1.test(Date1)) {
+                interaction.followUp('日付文字列(time1) の指定方法が違います。');
+                return;
+            } else if ( !dateRegex2.test(Date2) ) {
+                interaction.followUp('時間文字列(time2) の指定方法が違います。');
+                return;
+            }
+        }
+
         const AllDate = `${Date1} ${Date2}`;
 
         const deadline = new Date(AllDate);
