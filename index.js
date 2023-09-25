@@ -12,6 +12,7 @@ const fs = require('fs');
 // クライアントインスタンスと呼ばれるオブジェクトを作成
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
+const tasks = [];
 
 function checkDeadlines() {
     const rawData = fs.readFileSync('taskData.json');
@@ -23,8 +24,49 @@ function checkDeadlines() {
 
         const deadlineDate = Math.floor(new Date(task.date) / 1000);
 
-        if ( currentDate === deadlineDate ) {
-            deadlineEmbedFunction(task, '1155746186028929034')
+        try {
+            if ( currentDate === deadlineDate) {
+
+                if ( task.id ) {
+
+                    const channel = client.channels.cache.get('1155383813564809276')
+
+                    const overRequestEmbed = new EmbedBuilder()
+                        .setTitle("**依頼が無効になりました！**")
+                        .setDescription(`**下記の内容の依頼は期限を過ぎた為、強制的に削除されました。 \n 引き続き依頼を出したい場合、もう一度依頼を送信してください。**`)
+                        .setColor("#0000ff")
+                        .setTimestamp()
+                        .addFields(
+                            { name: '__Taskの内容__', value: `**${task.value}**` }
+                        )
+
+                    channel.send({ embeds: [overRequestEmbed] });
+
+                    const IdData = loadedData.filter(item => item.id === task.id); // 無効になる依頼のIDの要素を抜き出す
+                    const loadCount = loadedData.filter(task => task.count); // taskData.jsonの{ count: n }
+
+                    // taskData.jsonから取得したcountの値から1を引く
+                    let count = loadCount[0].count - 1;
+
+                    tasks.push({ count: count }); // tasksの配列にcount: (loadedData.count -= 1)を入れる
+
+                    loadedData.splice(loadedData.indexOf(IdData), 1);           // loadedDataから無効になる依頼を消す
+                    loadedData.splice(loadedData.indexOf(loadedData.count), 1); // loadedDataから{ count: x }の要素を消す
+
+                    const finalData = [...loadedData, ...tasks]; // い   つ   も   の
+
+                    tasks.pop();
+
+                    fs.writeFileSync( 'taskData.json', JSON.stringify(finalData, undefined, 2) );
+
+                    return;
+                    
+                }
+
+                deadlineEmbedFunction(task, '1155746186028929034')
+            }
+        } catch (error) {
+            console.log('期限メッセージを送信する際にエラーが発生しました', error);
         }
     });
 }
