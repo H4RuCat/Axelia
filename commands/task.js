@@ -241,8 +241,8 @@ module.exports = {
 
                 const addEmbed = new EmbedBuilder()
                     .setColor("#ffffff")
-                    .setTitle("**追加された Task**")
-                    .setDescription(`**${memberCount.toString()}. ** ${values.toString()}`)
+                    .setTitle("**Taskの追加**")
+                    .setDescription(`**内容** \n **${memberCount.toString()}. ** __${values.toString()}__ \n**Task期限:** ${formatDate(deadline)}`)
 
                 // taskData.json が存在するかCheck -> 無かったら作成し、memberTasksを入れる。その後return
                 if ( !fs.existsSync('taskData.json') ) {　
