@@ -3,6 +3,17 @@ const fs = require('fs');
 
 const tasks = [];
 
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+  
+    return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+  }
+
 module.exports = {
 	data: new SlashCommandBuilder()
     .setName('task')
@@ -196,8 +207,6 @@ module.exports = {
 
         const Date1 = interaction.options.getString('time1');    // 年月日
         const Date2 = interaction.options.getString('time2');  // 時分秒
-        
-        console.log(Date1);
 
         if ( Date1 != null || Date2 != null  ) {
             if ( !dateRegex1.test(Date1)) {
@@ -316,7 +325,7 @@ module.exports = {
                 // 滞納しているtaskが無かったら働くように促す。もしあったらそのまま表示。
                 if ( dataMemberTasks.length > 0 ) {
 
-                    const taskList = dataMemberTasks.map((task, index) => `**${index + 1}.** ${task.value} \n__${task.date}__`);
+                    const taskList = dataMemberTasks.map((task, index) => `**${index + 1}.** ${task.value} \n**Task期限:** __${formatDate(new Date(task.date))}__`);
                     listEmbed1.setDescription(taskList.join('\n\n')); 
 
                     interaction.followUp({ embeds: [listEmbed1] });
