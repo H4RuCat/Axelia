@@ -16,6 +16,16 @@ module.exports = {
                     .setDescription('追加したいタスクの内容')
                     .setRequired(true)
             )
+            .addStringOption(option =>
+                option.setName('time1')
+                    .setDescription('タスクの期間 | 年, 月, 日 | 例: 2023/08/23')
+                    .setRequired(true)
+            )
+            .addStringOption(option =>
+                option.setName('time2')
+                    .setDescription('タスクの期間 | 時間, 分, 秒 | 例: 15:30:30')
+                    .setRequired(true)
+            )
     )
     .addSubcommand(subcommand =>
         subcommand
@@ -100,7 +110,6 @@ module.exports = {
 
                 const avatarURL = user.displayAvatarURL({ format: 'png', dynamic: true, size: 1024 });
                 const logChannel = interaction.guild.channels.cache.get('1055771880524619856');
-                const requestChannel = interaction.guild.channels.cache.get('1155383813564809276');
 
                 const visionEmbed = new EmbedBuilder()
                     .setTitle("**Task vision**")
@@ -150,7 +159,7 @@ module.exports = {
         const logChannel = interaction.guild.channels.cache.get('1055771880524619856');
         const requestChannel = interaction.guild.channels.cache.get('1155383813564809276');
 
-        // var now = new Date();
+        var now = new Date();
 
         // var Year = now.getFullYear();
         // var Month = now.getMonth()+1;
@@ -182,8 +191,14 @@ module.exports = {
                     return;
                 }
 
-                // tasksの配列に key(interaction.member.id), value(slashCommandのaddの中身)を入れてる
-                tasks.push({ key: member, value: contentValue });
+                const Date1 = interaction.options.getString('time1');    // 年月日
+                const Date2 = interaction.options.getString('time2');  // 時分秒
+                const AllDate = `${Date1} ${Date2}`;
+
+                const deadline = new Date(AllDate);
+
+                // tasksの配列に key(interaction.member.id), value(slashCommandのaddの中身), date(指定した時間)を入れてる
+                tasks.push({ key: member, value: contentValue, date: deadline });
                 // keyに一致する要素を探す
                 const memberTasks = tasks.filter(task => task.key === member);
                 // 追加したtaskの内容を表示する。
@@ -275,8 +290,8 @@ module.exports = {
                 // 滞納しているtaskが無かったら働くように促す。もしあったらそのまま表示。
                 if ( dataMemberTasks.length > 0 ) {
 
-                    const taskList = dataMemberTasks.map((task, index) => `**${index + 1}.** ${task.value}`);
-                    listEmbed1.setDescription(taskList.join('\n')); 
+                    const taskList = dataMemberTasks.map((task, index) => `**${index + 1}.** ${task.value} \n__${task.date}__`);
+                    listEmbed1.setDescription(taskList.join('\n\n')); 
 
                     interaction.followUp({ embeds: [listEmbed1] });
 
