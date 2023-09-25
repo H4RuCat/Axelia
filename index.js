@@ -3,17 +3,58 @@ const testFile = require('./commands/test.js');
 const taskFile = require('./commands/task.js');
 // const playFile = require('./commands/play.js');
 
-// discord.jsライブラリの中から必要な設定を呼び出し、変数に保存
-const { Client, Events, GatewayIntentBits } = require('discord.js');
 // 設定ファイルからトークン情報を呼び出し、変数に保存
 const { token } = require('./config.json');
+
+// discord.jsライブラリの中から必要な設定を呼び出し、変数に保存
+const { Client, Events, GatewayIntentBits, EmbedBuilder } = require('discord.js');
+const fs = require('fs');
 // クライアントインスタンスと呼ばれるオブジェクトを作成
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 
+function checkDeadlines() {
+    const rawData = fs.readFileSync('taskData.json');
+    const loadedData = JSON.parse(rawData);
+  
+    const currentDate = Math.floor(new Date() / 1000);
+    
+    loadedData.forEach(task => {
+
+        const deadlineDate = Math.floor(new Date(task.date) / 1000);
+
+        if ( currentDate === deadlineDate ) {
+            deadlineEmbedFunction(task, '1155746186028929034')
+        }
+    });
+}
+
+function deadlineEmbedFunction(task, channelId) {
+
+    // taskのidを表示させられるようにいつかしたいなぁって
+
+    const deadlineEmbed = new EmbedBuilder()
+        .setTitle("**Taskの期限になりました！**")
+        .setDescription(`**え？？？？？勿論終わっていますよね？？？？？**`)
+        .setColor("#0000ff")
+        .setTimestamp()
+        .addFields(
+            { name: '__Taskの内容__', value: `**${task.value}**` }
+        )
+    
+        const channel = client.channels.cache.get(channelId)
+        
+        channel.send(`## <@${task.key}> **絶対確認しろ！！！！！！！！！！！！！**`);
+        channel.send({ embeds: [deadlineEmbed] });
+}
+
 // クライアントオブジェクトが準備OKとなったとき一度だけ実行
 client.once(Events.ClientReady, c => {
 	console.log(`準備OKです! ${c.user.tag}がログインします。`);
+
+    checkDeadlines();
+    setInterval(checkDeadlines, 1000);
+
 });
 
 // スラッシュコマンドに応答するには、interactionCreateのイベントリスナーを使う必要がある
@@ -61,6 +102,7 @@ client.on(Events.InteractionCreate, async interaction => {
                 break;
         }
     }
+
 });
 
 
