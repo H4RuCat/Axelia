@@ -18,7 +18,7 @@ module.exports = {
             )
             .addStringOption(option =>
                 option.setName('time1')
-                    .setDescription('タスクの期間 | 年, 月, 日 | 例: 2023/08/23')
+                    .setDescription('タスクの期間 | 年, 月, 日 | 例: 2023/09/25')
                     .setRequired(true)
             )
             .addStringOption(option =>
@@ -61,6 +61,16 @@ module.exports = {
                     .setDescription('依頼するtaskの内容を指定')
                     .setRequired(true)
                 )
+            .addStringOption(option =>
+                    option.setName('time1')
+                        .setDescription('タスクの期間 | 年, 月, 日 | 例: 2023/09/25')
+                        .setRequired(true)
+                )
+            .addStringOption(option =>
+                    option.setName('time2')
+                        .setDescription('タスクの期間 | 時間, 分, 秒 | 例: 15:30:30')
+                        .setRequired(true)
+                )
         ),
 
     handleButtonInteraction: async function (interaction) {
@@ -93,7 +103,7 @@ module.exports = {
                 let count = loadCount[0].count - 1;
                 
                 // tasksの配列の中にぶっこむ
-                tasks.push({ key: member, value: requestTask.value }, { count: count });
+                tasks.push({ key: member, value: requestTask.value , date: requestTask.date}, { count: count });
                 
                 // taskData.jsonから、現在存在する{ count: x }と、押されたButtonのメッセージに対応する要素を削除
                 loadedData.splice(loadedData.indexOf(requestTask), 1);
@@ -180,6 +190,13 @@ module.exports = {
         .addFields(
             { name: '__User情報__', value: `**UserName:** ${user.username} | **UserID:** ${user.id}` }
         )
+        
+        const Date1 = interaction.options.getString('time1');    // 年月日
+        const Date2 = interaction.options.getString('time2');  // 時分秒
+        const AllDate = `${Date1} ${Date2}`;
+
+        const deadline = new Date(AllDate);
+
 
         // SlashCommand群
         switch (typeValue) {
@@ -190,13 +207,6 @@ module.exports = {
                     interaction.followUp('追加するタスクの内容を考えてから出直してください。')
                     return;
                 }
-
-                const Date1 = interaction.options.getString('time1');    // 年月日
-                const Date2 = interaction.options.getString('time2');  // 時分秒
-                const AllDate = `${Date1} ${Date2}`;
-
-                const deadline = new Date(AllDate);
-
                 // tasksの配列に key(interaction.member.id), value(slashCommandのaddの中身), date(指定した時間)を入れてる
                 tasks.push({ key: member, value: contentValue, date: deadline });
                 // keyに一致する要素を探す
@@ -349,10 +359,12 @@ module.exports = {
                 await requestChannel.send({ 
                     embeds: [requestEmbed],
                     components: [requestRow]
+
                 });
                 let newArray = [];
+
                 //memberが存在しないため、valueとidのみ配列へ
-                newArray.push({ value: taskValue, id: count });
+                newArray.push({ value: taskValue, id: count, date: deadline });
                 // {count: (数字)}の形式で配列に入れる
                 newArray.push({ count: count });
                 //がっちゃんこ
