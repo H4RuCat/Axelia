@@ -4,12 +4,13 @@ const { REST, Routes } = require('discord.js');
 // test.jsのmodule.exportsを呼び出す
 const testFile = require('./commands/test.js');
 const taskFile = require('./commands/task.js');
+const forceFile = require('./commands/force.js');
 
 // 環境変数としてapplicationId, guildId, tokenの3つが必要
 const { applicationId, guildId, token } = require('./config.json');
 
 // 登録コマンドを呼び出してリスト形式で登録
-const commands = [testFile.data.toJSON(), taskFile.data.toJSON()];
+const commands = [testFile.data.toJSON(), taskFile.data.toJSON(), forceFile.data.toJSON()];
 
 // DiscordのAPIには現在最新のversion10を指定
 const rest = new REST({ version: '10' }).setToken(token);
