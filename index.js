@@ -1,10 +1,11 @@
 // test.jsのmodule.exportsを呼び出し
 const testFile = require('./commands/test.js');
 const taskFile = require('./commands/task.js');
+const forceFile = require('./commands/force.js');
 // const playFile = require('./commands/play.js');
 
 // 設定ファイルからトークン情報を呼び出し、変数に保存
-const { token } = require('./config.json');
+const { token, configDeadlineChannel } = require('./config.json');
 
 // discord.jsライブラリの中から必要な設定を呼び出し、変数に保存
 const { Client, Events, GatewayIntentBits, EmbedBuilder } = require('discord.js');
@@ -29,7 +30,7 @@ function checkDeadlines() {
 
                 if ( task.id ) {
 
-                    const channel = client.channels.cache.get('1155383813564809276')
+                    const channel = client.channels.cache.get(configDeadlineChannel);
 
                     const overRequestEmbed = new EmbedBuilder()
                         .setTitle("**依頼が無効になりました！**")
@@ -63,7 +64,7 @@ function checkDeadlines() {
                     
                 }
 
-                deadlineEmbedFunction(task, '1155746186028929034')
+                deadlineEmbedFunction(task, '1156231963229822976')
             }
         } catch (error) {
             console.log('期限メッセージを送信する際にエラーが発生しました', error);
@@ -132,6 +133,9 @@ client.on(Events.InteractionCreate, async interaction => {
             //     break;
             case taskFile.data.name:
                 await executeCommand(taskFile, interaction);
+                break;
+            case forceFile.data.name:
+                await executeCommand(forceFile, interaction);
                 break;
             default:
                 console.error(`${commandName}というコマンドには対応していません。`);
