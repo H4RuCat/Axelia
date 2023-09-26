@@ -1,5 +1,6 @@
-const { ActionRowBuilder, SlashCommandBuilder , EmbedBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { ActionRowBuilder, SlashCommandBuilder , EmbedBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const fs = require('fs');
+const { configLogChannel, configRequestChannel } = require('../config.json');
 
 const tasks = [];
 
@@ -61,28 +62,28 @@ module.exports = {
                 option.setName('role')
                     .setDescription('taskを依頼するroleを指定')
                     .setRequired(true)
-                )
+            )
             .addStringOption(option =>
                 option.setName('title')
                     .setDescription('依頼するtaskのtitleを指定')
                     .setRequired(true)
-                )
+            )
             .addStringOption(option =>
                 option.setName('task')
                     .setDescription('依頼するtaskの内容を指定')
                     .setRequired(true)
-                )
+            )
             .addStringOption(option =>
                     option.setName('time1')
                         .setDescription('タスクの期間 | 年, 月, 日 | 例: 2023/09/25')
                         .setRequired(true)
-                )
+            )
             .addStringOption(option =>
                     option.setName('time2')
                         .setDescription('タスクの期間 | 時間, 分, 秒 | 例: 15:30:30')
                         .setRequired(true)
-                )
-        ),
+            )
+    ),
 
     handleButtonInteraction: async function (interaction) {
 
@@ -130,7 +131,7 @@ module.exports = {
                 interaction.reply({ content: `${interaction.member} **がこのタスクを引き受けました。**` })
 
                 const avatarURL = user.displayAvatarURL({ format: 'png', dynamic: true, size: 1024 });
-                const logChannel = interaction.guild.channels.cache.get('1055771880524619856');
+                const logChannel = interaction.guild.channels.cache.get(configLogChannel);
 
                 const visionEmbed = new EmbedBuilder()
                     .setTitle("**Task vision**")
@@ -177,8 +178,8 @@ module.exports = {
 
         const avatarURL = user.displayAvatarURL({ format: 'png', dynamic: true, size: 1024 });
 
-        const logChannel = interaction.guild.channels.cache.get('1055771880524619856');
-        const requestChannel = interaction.guild.channels.cache.get('1155383813564809276');
+        const logChannel = interaction.guild.channels.cache.get(configLogChannel);
+        const requestChannel = interaction.guild.channels.cache.get(configRequestChannel);
 
         var now = new Date();
 
@@ -232,6 +233,7 @@ module.exports = {
                     interaction.followUp('追加するタスクの内容を考えてから出直してください。')
                     return;
                 }
+
                 // tasksの配列に key(interaction.member.id), value(slashCommandのaddの中身), date(指定した時間)を入れてる
                 tasks.push({ key: member, value: contentValue, date: deadline });
                 // keyに一致する要素を探す
@@ -251,7 +253,7 @@ module.exports = {
                     await interaction.followUp('`taskData.json`が存在しない為、作成しました。');
                     tasks.pop();
                     return;
- 
+
                 } else {
 
                     // なんか、データをがっちゃんこさせるやつ
