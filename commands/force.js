@@ -240,9 +240,6 @@ module.exports = {
                     .setTitle("**Task 一覧**")
                     .setDescription('そのユーザーにはTaskが存在しません。働かせてあげてください。');
 
-                
-                console.log(dataMemberTasks.length);
-
                 // 滞納しているtaskが無かったら働くように促す。もしあったらそのまま表示。
                 if ( dataMemberTasks.length > 0 ) {
 
