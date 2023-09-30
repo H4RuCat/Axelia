@@ -115,7 +115,7 @@ module.exports = {
                 let count = loadCount[0].count - 1;
                 
                 // tasksの配列の中にぶっこむ
-                tasks.push({ key: member, value: requestTask.value , date: requestTask.date}, { count: count });
+                tasks.push({ key: member, value: `${requestTask.title}, ${requestTask.value}` , date: requestTask.date}, { count: count });
                 
                 // taskData.jsonから、現在存在する{ count: x }と、押されたButtonのメッセージに対応する要素を削除
                 loadedData.splice(loadedData.indexOf(requestTask), 1);
@@ -126,7 +126,10 @@ module.exports = {
 
                 fs.writeFileSync( 'taskData.json', JSON.stringify(finalData, undefined, 2) );
 
+                console.log(tasks);
                 tasks.pop();
+                tasks.pop();
+                console.log(tasks);
 
                 interaction.reply({ content: `${interaction.member} **がこのタスクを引き受けました。**` })
 
@@ -143,6 +146,9 @@ module.exports = {
                     )
                     .addFields(
                         { name: '__Taskの内容__', value: `**${requestTask.value}**` }
+                    )
+                    .addFields(
+                        { name: '__Task納期__', value: `**${requestTask.date}**` }
                     )
 
                 await logChannel.send({ embeds: [visionEmbed] });
@@ -367,8 +373,11 @@ module.exports = {
                     .setTitle("**Task 依頼**")
                     .setThumbnail(avatarURL)
                     .setDescription(`**__${titleValue}__**`)
-                    .setFields(
+                    .addFields(
                         { name: ` `, value: `${taskValue}`}
+                    )
+                    .addFields(
+                        { name: '__Task納期__', value: `**${formatDate(deadline)}**` }
                     )
                     .setTimestamp()
                 
@@ -388,10 +397,19 @@ module.exports = {
                     components: [requestRow]
 
                 });
+
+                const requestThread = await requestChannel.threads.create({
+                    name: `${titleValue}`,
+                    autoArchiveDuration: 60,
+                    reason: `${taskValue}`,
+                });
+
+                requestThread;
+
                 let newArray = [];
 
                 //memberが存在しないため、valueとidのみ配列へ
-                newArray.push({ value: taskValue, id: count, date: deadline });
+                newArray.push({ title: titleValue ,value: taskValue, id: count, date: deadline });
                 // {count: (数字)}の形式で配列に入れる
                 newArray.push({ count: count });
                 //がっちゃんこ
@@ -400,10 +418,10 @@ module.exports = {
                 fs.writeFileSync( 'taskData.json', JSON.stringify(finalData, undefined, 2) );
 
                 visionEmbed
-                .setColor("#ffff00")
-                .addFields(
-                    { name: '__Taskの内容__', value: `**${taskValue.toString()}**` }
-                )
+                    .setColor("#ffff00")
+                    .addFields(
+                        { name: '__Taskの内容__', value: `**${taskValue.toString()}**` }
+                    )
 
                 await logChannel.send({ embeds: [visionEmbed] });
                 
