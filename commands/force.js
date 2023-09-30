@@ -79,8 +79,6 @@ module.exports = {
         user = interaction.member.user;
         commandMember = interaction.options.getUser('member');
 
-        console.log(commandMember.id);
-
         // データ(今回は taskData.json)読み取るときに使う二人
         const rawData = fs.readFileSync('taskData.json');
         const loadedData = JSON.parse(rawData);
@@ -89,7 +87,7 @@ module.exports = {
         const memberCount = loadedData.filter(task => task.key === commandMember).length + 1;
 
         // lengthの形で、どのくらい要素があるか。
-        const dataMemberTasks = loadedData.filter(task => task.key === commandMember);
+        const dataMemberTasks = loadedData.filter(task => task.key === commandMember.id);
 
         const typeValue = interaction.options.getSubcommand();
         const contentValue = interaction.options.getString('task');
@@ -241,6 +239,9 @@ module.exports = {
                     .setColor("#ffffff")
                     .setTitle("**Task 一覧**")
                     .setDescription('そのユーザーにはTaskが存在しません。働かせてあげてください。');
+
+                
+                console.log(dataMemberTasks.length);
 
                 // 滞納しているtaskが無かったら働くように促す。もしあったらそのまま表示。
                 if ( dataMemberTasks.length > 0 ) {
