@@ -137,6 +137,9 @@ client.on(Events.InteractionCreate, async interaction => {
             case forceFile.data.name:
                 await executeCommand(forceFile, interaction);
                 break;
+            case pollFile.data.name:
+                await executeCommand(pollFile, interaction);
+                break;
             default:
                 console.error(`${commandName}というコマンドには対応していません。`);
         }
